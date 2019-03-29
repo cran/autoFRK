@@ -105,7 +105,7 @@ yhat=predict(one.imat,newloc=grids)
 G=mrts(X,15)
 Gpred=predict(G,newx=grids)
 one.usr=autoFRK(Data=z,loc=X,G=G)  
-yhat2=predict(one.usr,basis=Gpred)
+yhat2=predict(one.usr,newloc=grids,basis=Gpred)
 
 require(fields)
 par(mfrow=c(2,2))

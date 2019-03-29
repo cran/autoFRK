@@ -77,8 +77,7 @@ function (Data, loc, D = diag.spam(NROW(Data)), maxit = 50, avgtol = 0.1^6,
     maxK = NULL, Kseq = NULL, method = c("fast", "EM"), n.neighbor = 3, 
     maxknot = 5000, DfromLK = NULL, Fk = NULL) 
 {
-    if (class(Data) == "numeric") 
-        Data = as.matrix(Data)
+    Data = as.matrix(Data)
     empty = apply(!is.na(Data), 2, sum) == 0
     if (sum(empty) > 0) 
         Data = Data[, which(!empty)]
@@ -501,8 +500,9 @@ function (Fk, Data, Depsilon, maxit, avgtol, wSave = FALSE, external = FALSE,
                 Ptt = solve(iP)
                 Gt = as.matrix(Ptt %*% t(iDBt)/old$s)
                 eta = c(0 + Gt %*% zt)
-                s1kk = diag(BiDBt %*% (eta %*% t(eta) + 
-                  Ptt))
+                s1kk = diag(BiDBt %*% (eta %*% t(eta) + Ptt))
+
+
                 rbind(s1kk, eta, Ptt)
             })
             sumPtt = sumPtt + s1.eta.P[-c(1:2), ]
@@ -571,7 +571,7 @@ function (Fk, Data, Depsilon, maxit, avgtol, wSave = FALSE, external = FALSE,
 getHalf <-
 function (Fk, iDFk) 
 {
-    dec = eigen(t(Fk) %*% iDFk)
+    dec = mgcv::slanczos(t(Fk) %*% iDFk, k=NCOL(Fk))
     sroot = sqrt(pmax(dec$value, 0))
     sroot[sroot == 0] = Inf
     sroot = 1/sroot
@@ -869,8 +869,12 @@ function (knot, k, x = NULL)
     is64bit = length(grep("64", Sys.info()["release"])) > 0
     if ((!is64bit) & (max(NROW(x), NROW(knot)) > 20000)) 
         stop("Use 64-bit version of R for such a volume of data!")
-    xobs = as.matrix(knot)
+    if (NCOL(knot) == 1) 
+        xobs = as.matrix(as.double(as.matrix(knot)))
+    else xobs = apply(knot, 2, as.double)
     Xu = uniquecombs(cbind(xobs))
+    if (is.null(x) & length(Xu) != length(xobs)) 
+        x = xobs
     colnames(Xu) = NULL
     n = n.Xu = NROW(Xu)
     ndims = NCOL(Xu)
@@ -883,14 +887,42 @@ function (knot, k, x = NULL)
             warnings("Set a smaller k; or it may eat up all your RAM!")
         }
         Xu = subknot(Xu, bmax)
+        Xu = as.matrix(Xu)
         n = NROW(Xu)
         n.Xu = n
     }
     xobs_diag = diag(sqrt(n/(n - 1))/apply(xobs, 2, sd), ndims)
-    if (k - ndims - 1 > 0 & !is.null(x)) 
-        result <- mrtsrcpp_predict0(Xu, xobs_diag, x, k - ndims - 
-            1)
-    else result <- mrtsrcpp(Xu, xobs_diag, k - ndims - 1)
+    if (!is.null(x)) {
+        if (NCOL(x) == 1) 
+            x = as.matrix(as.double(as.matrix(x)))
+        else x = as.matrix(array(as.double(as.matrix(x)), dim(x)))
+        if (k - ndims - 1 > 0) 
+
+
+            result <- mrtsrcpp_predict0(Xu, xobs_diag, x, k - 
+                ndims - 1)
+        else {
+            X2 = scale(Xu, scale = FALSE)
+            shift = colMeans(Xu)
+            nconst = sqrt(diag(t(X2) %*% X2))
+            X2 = cbind(1, t((t(x) - shift)/nconst) * sqrt(n))
+            result <- list(X = X2[, 1:k])
+            x = NULL
+        }
+    }
+
+
+    else {
+        if (k - ndims - 1 > 0) 
+            result <- mrtsrcpp(Xu, xobs_diag, k - ndims - 1)
+        else {
+            X2 = scale(Xu, scale = FALSE)
+            shift = colMeans(Xu)
+            nconst = sqrt(diag(t(X2) %*% X2))
+            X2 = cbind(1, t((t(Xu) - shift)/nconst) * sqrt(n))
+            result <- list(X = X2[, 1:k])
+        }
+    }
     obj = result$X
     attr(obj, "UZ") = result$UZ
     attr(obj, "Xu") = Xu
@@ -948,6 +980,10 @@ function (object, obsData = NULL, obsloc = NULL, mu.obs = 0,
         if (NROW(basis) != NROW(newloc)) 
             stop("Dimensions of newloc and basis are not compatible!")
     }
+	else {
+        if (NROW(basis) != NROW(object$G)) 
+            stop("Dimensions of obsloc and basis are not compatible!")	
+	}
     if (is.null(object$LKobj)) {
         if (is.null(obsloc) & is.null(obsData)) {
             miss = attr(object, "missing")
@@ -1139,12 +1175,17 @@ function (object, newx, ...)
     ndims = NCOL(Xu)
     k = NCOL(object)
     x0 = matrix(as.matrix(newx), ncol = ndims)
-    X1 = mrtsrcpp_predict(Xu, xobs_diag, x0, attr(object, "BBBH"), 
-        attr(object, "UZ"), attr(object, "nconst"), k)$X1
+
+
     kstar = (k - ndims - 1)
     if (kstar <= 0) 
         X1 = NULL
-    else X1 = X1[, 1:kstar]
+    else {
+        X1 = mrtsrcpp_predict(Xu, xobs_diag, x0, attr(object, 
+            "BBBH"), attr(object, "UZ"), attr(object, "nconst"), 
+            k)$X1
+        X1 = X1[, 1:kstar]
+    }
     shift = colMeans(attr(object, "Xu"))
     X2 = sweep(cbind(x0), 2, shift, "-")
     X2 = cbind(1, sweep(X2, 2, attr(object, "nconst"), "/"))
@@ -1158,9 +1199,9 @@ function (x, ...)
     attr(x, "pinfo") = NULL
     if (!is.null(x$LKobj)) 
         x$LKobj = x$LKobj$summary
-    out$G = paste("a ", NROW(x$G), " by ", NCOL(x$G), "mrts matrix", 
+    out = paste("a ", NROW(x$G), " by ", NCOL(x$G), " mrts matrix", 
         sep = "")
-    print(unclass(x))
+    print(out)
 }
 print.mrts <-
 function (x, ...) 
