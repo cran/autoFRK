@@ -81,7 +81,7 @@ function (Data, loc, D = diag.spam(NROW(Data)), maxit = 50, avgtol = 0.1^6,
     empty = apply(!is.na(Data), 2, sum) == 0
     if (sum(empty) > 0) 
         Data = Data[, which(!empty)]
-    if (class(Data) == "numeric") 
+    if (is(Data, "vector")) 
         Data = as.matrix(Data)
     loc = as.matrix(loc)
     d = NCOL(loc)
@@ -187,9 +187,9 @@ function (Data, loc, D = diag.spam(NROW(Data)), maxit = 50, avgtol = 0.1^6,
 checkDiag <-
 function (X) 
 {
-    if (class(X) == "numeric") 
+    if (is(X, "numeric") & (length(X) == 1)) 
         return(TRUE)
-    if (class(X) == "matrix") {
+    if (is(X, "matrix")) {
         if (sum(abs(diag(diag(X)) - X)) < .Machine$double.eps) 
             return(TRUE)
         else return(FALSE)
@@ -501,8 +501,6 @@ function (Fk, Data, Depsilon, maxit, avgtol, wSave = FALSE, external = FALSE,
                 Gt = as.matrix(Ptt %*% t(iDBt)/old$s)
                 eta = c(0 + Gt %*% zt)
                 s1kk = diag(BiDBt %*% (eta %*% t(eta) + Ptt))
-
-
                 rbind(s1kk, eta, Ptt)
             })
             sumPtt = sumPtt + s1.eta.P[-c(1:2), ]
@@ -571,7 +569,7 @@ function (Fk, Data, Depsilon, maxit, avgtol, wSave = FALSE, external = FALSE,
 getHalf <-
 function (Fk, iDFk) 
 {
-    dec = mgcv::slanczos(t(Fk) %*% iDFk, k=NCOL(Fk))
+    dec = mgcv::slanczos(t(Fk) %*% iDFk, k = NCOL(Fk))
     sroot = sqrt(pmax(dec$value, 0))
     sroot[sroot == 0] = Inf
     sroot = 1/sroot
@@ -615,14 +613,14 @@ function (Data, Fk, D = diag.spam(NROW(Data)), maxit = 50, avgtol = 0.1^6,
     wSave = FALSE, DfromLK = NULL, vfixed = NULL, num.report = TRUE) 
 {
     withNA = sum(is.na(Data)) > 0
-    if (class(Data) == "numeric") 
+    if (is(Data, "vector")) 
         Data = as.matrix(Data)
     TT = NCOL(Data)
     empty = apply(!is.na(Data), 2, sum) == 0
     notempty = which(!empty)
     if (sum(empty) > 0) 
         Data = as.matrix(Data[, notempty])
-    if (class(Data) == "numeric") 
+    if (is(Data, "vector")) 
         Data = as.matrix(Data)
     del = which(rowSums(as.matrix(!is.na(Data))) == 0)
     pick = 1:NROW(Data)
@@ -738,12 +736,12 @@ LKnFRKini <-
 function (Data, loc, nlevel = 3, weights = NULL, n.neighbor = 3, 
     nu = 1) 
 {
-    if (class(Data) == "numeric") 
+    if (is(Data, "vector")) 
         Data = as.matrix(Data)
     empty = apply(!is.na(Data), 2, sum) == 0
     if (sum(empty) > 0) 
         Data = Data[, which(!empty)]
-    if (class(Data) == "numeric") 
+    if (is(Data, "vector")) 
         Data = as.matrix(Data)
     loc = as.matrix(loc)
     N = NROW(Data)
@@ -855,7 +853,7 @@ mkpd <-
 function (M) 
 {
     v = try(min(eigen(M, only.values = T)$value), silent = TRUE)
-    if (class(v) == "try-error") {
+    if (is(v, "try-error")) {
         M = (M + t(M))/2
         v = min(eigen(M, only.values = T)$value)
     }
@@ -897,8 +895,6 @@ function (knot, k, x = NULL)
             x = as.matrix(as.double(as.matrix(x)))
         else x = as.matrix(array(as.double(as.matrix(x)), dim(x)))
         if (k - ndims - 1 > 0) 
-
-
             result <- mrtsrcpp_predict0(Xu, xobs_diag, x, k - 
                 ndims - 1)
         else {
@@ -910,8 +906,6 @@ function (knot, k, x = NULL)
             x = NULL
         }
     }
-
-
     else {
         if (k - ndims - 1 > 0) 
             result <- mrtsrcpp(Xu, xobs_diag, k - ndims - 1)
@@ -957,7 +951,7 @@ function (object, obsData = NULL, obsloc = NULL, mu.obs = 0,
         if (is.null(newloc) & is.null(obsloc)) 
             basis = object$G
         else {
-            if (class(object$G) != "mrts") 
+            if (!is(object$G, "mrts")) 
                 stop("Basis matrix of new locations should be given (unless the model was fitted with mrts bases)!")
             else {
                 if (is.null(newloc)) 
@@ -980,10 +974,10 @@ function (object, obsData = NULL, obsloc = NULL, mu.obs = 0,
         if (NROW(basis) != NROW(newloc)) 
             stop("Dimensions of newloc and basis are not compatible!")
     }
-	else {
+    else {
         if (NROW(basis) != NROW(object$G)) 
-            stop("Dimensions of obsloc and basis are not compatible!")	
-	}
+            stop("Dimensions of obsloc and basis are not compatible!")
+    }
     if (is.null(object$LKobj)) {
         if (is.null(obsloc) & is.null(obsData)) {
             miss = attr(object, "missing")
@@ -1175,8 +1169,6 @@ function (object, newx, ...)
     ndims = NCOL(Xu)
     k = NCOL(object)
     x0 = matrix(as.matrix(newx), ncol = ndims)
-
-
     kstar = (k - ndims - 1)
     if (kstar <= 0) 
         X1 = NULL
@@ -1216,7 +1208,7 @@ function ()
 {
     os = R.version$os
     ram = try(system_ram(os), silent = TRUE)
-    if (class(ram) == "try-error") 
+    if (is(ram, "try-error")) 
         ram = 2048 * 1024 * 1024
     return(ram[1])
 }
@@ -1337,9 +1329,9 @@ function (os)
 toSpMat <-
 function (mat) 
 {
-    if (class(mat) == "data.frame") 
+    if (is(mat, "data.frame")) 
         mat = as.matrix(mat)
-    if (class(mat) == "matrix") {
+    if (is(mat, "matrix")) {
         if (length(mat) > 10^8) {
             warnings("Use sparse matrix as input instead; otherwise it could take a very long time!")
             db = tempfile()
