@@ -123,7 +123,7 @@ function (Data, loc, D = diag.spam(NROW(Data)), maxit = 50, avgtol = 0.1^6,
             K = unique(round(seq(d + 1, maxK, l = 30)))
     }
     if (is.null(Fk)) 
-        Fk = mrts(knot, max(K), loc)
+        Fk = mrts(knot, max(K), loc, maxknot)
     AIClist = rep(Inf, length(K))
     method = match.arg(method)
     if ((method == "EM") & (is.null(DfromLK))) {
@@ -862,7 +862,7 @@ function (M)
     return(M)
 }
 mrts <-
-function (knot, k, x = NULL) 
+function (knot, k, x = NULL, maxknot = 5000) 
 {
     is64bit = length(grep("64", Sys.info()["release"])) > 0
     if ((!is64bit) & (max(NROW(x), NROW(knot)) > 20000)) 
@@ -878,14 +878,12 @@ function (knot, k, x = NULL)
     ndims = NCOL(Xu)
     if (k < (ndims + 1)) 
         stop("k-1 can not be smaller than the number of dimensions!")
-    if ((n^3/rlimit) > 25) {
-        bmax = (rlimit/max(NROW(x), NROW(xobs)))^(1/3)^(1/ndims)
-        if (bmax < k) {
-            bmax = k
-            warnings("Set a smaller k; or it may eat up all your RAM!")
-        }
+    if (maxknot < n) {
+        bmax = maxknot
         Xu = subknot(Xu, bmax)
         Xu = as.matrix(Xu)
+        if (is.null(x)) 
+            x = knot
         n = NROW(Xu)
         n.Xu = n
     }
@@ -1203,15 +1201,6 @@ function (x, ...)
     else out = x[, 1:NCOL(x)]
     print(out)
 }
-ramSize <-
-function () 
-{
-    os = R.version$os
-    ram = try(system_ram(os), silent = TRUE)
-    if (is(ram, "try-error")) 
-        ram = 2048 * 1024 * 1024
-    return(ram[1])
-}
 setNC <-
 function (z, loc, nlevel) 
 {
@@ -1375,4 +1364,3 @@ DIST=fields::rdist
 SQLdbList=filehashSQLite::dbList
 log=base::log
 diag.spam=spam::diag.spam
-rlimit=ramSize()
