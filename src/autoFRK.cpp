@@ -9,7 +9,26 @@ using Eigen::Map;
 using Eigen::MatrixXd;
 using Eigen::Lower;
 typedef Map<MatrixXd> MapMatd;
+using Eigen::VectorXd;                  
+using Eigen::SelfAdjointEigenSolver;   
 
+using namespace Eigen;
+Eigen::VectorXd getASCeigenValues(const Eigen::Map<Eigen::MatrixXd> A) {
+    SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
+    return es.eigenvalues();
+}
+
+using namespace Eigen;
+// [[Rcpp::export]]
+Rcpp::List getASCeigens(const Eigen::Map<Eigen::MatrixXd> A) {
+    SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
+	Eigen::MatrixXd V;
+	Eigen::VectorXd lambda;
+	lambda = es.eigenvalues();
+	V = es.eigenvectors();
+      return Rcpp::List::create(Rcpp::Named("value") = lambda,
+                            Rcpp::Named("vector") = V);
+}
 
 
 using namespace Spectra;

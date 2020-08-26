@@ -566,14 +566,23 @@ function (Fk, Data, Depsilon, maxit, avgtol, wSave = FALSE, external = FALSE,
         }
     }
 }
+getEigen <-
+function (A)
+{
+ obj=getASCeigens(A)
+ obj$value=rev(obj$value)
+ obj$vector=obj$vector[NCOL(A):1,] 
+ obj
+}
 getHalf <-
 function (Fk, iDFk) 
-{
-    dec = mgcv::slanczos(t(Fk) %*% iDFk, k = NCOL(Fk))
-    sroot = sqrt(pmax(dec$value, 0))
-    sroot[sroot == 0] = Inf
-    sroot = 1/sroot
-    dec$vector %*% (sroot * t(dec$vector))
+{	
+ dec=getEigen(t(Fk)%*%iDFk)
+ dec$vector=dec$vector
+ sroot=sqrt(pmax(dec$value,0))
+ sroot[sroot==0]=Inf
+ sroot=1/sroot
+ dec$vector%*%(sroot*t(dec$vector)) 
 }
 getlik <-
 function (Data, Fk, M, s, Depsilon) 
@@ -864,7 +873,7 @@ function (M)
 mrts <-
 function (knot, k, x = NULL, maxknot = 5000) 
 {
-    is64bit = length(grep("64", Sys.info()["release"])) > 0
+    is64bit = length(grep("64-bit", sessionInfo()$platform)) > 0
     if ((!is64bit) & (max(NROW(x), NROW(knot)) > 20000)) 
         stop("Use 64-bit version of R for such a volume of data!")
     if (NCOL(knot) == 1) 
@@ -916,6 +925,10 @@ function (knot, k, x = NULL, maxknot = 5000)
         }
     }
     obj = result$X
+    if (is.null(result$nconst)) {
+        X2 = scale(Xu, scale = FALSE)
+        result$nconst = sqrt(diag(t(X2) %*% X2))
+    }
     attr(obj, "UZ") = result$UZ
     attr(obj, "Xu") = Xu
     attr(obj, "nconst") = result$nconst

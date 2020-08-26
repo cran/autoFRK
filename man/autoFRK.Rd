@@ -44,6 +44,7 @@ if "EM" then the missing data are taken care by the EM algorithm. Default is "fa
 
 \item{maxknot}{maximum number of knots to be used in 
 generating basis functions. Default is 5000.}
+
 }
 \value{
 an object of class \code{FRK} is returned, which is a list of the following

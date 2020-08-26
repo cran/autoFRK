@@ -1,7 +1,7 @@
-7d04836058db0ed49adfb84da5f29c71 *DESCRIPTION
-ee678781af1177c7ab2b7fe7b9452a34 *NAMESPACE
-4c0067f104044317d40fc4bc8b3a04f8 *R/RcppExports.R
-74360a4c344368d86b771fe8d2c7bfb2 *R/autoFRK.R
+d3c272e6c6e0517db85f3e4ff0187205 *DESCRIPTION
+b41368ba6c5c783b6a9d5e6c093af0c7 *NAMESPACE
+7a790ffa9a0a1b7702d289f9b8e7992a *R/RcppExports.R
+afd614f1c421745849da2ba1d6ed55b5 *R/autoFRK.R
 b19f0485073d7c8c1eb051bc7f63ffa4 *man/DIST.Rd
 b46e4d366e0155b5d8c401933536a290 *man/EM0miss.Rd
 ae67f2166beea5db762a180516cffc67 *man/IFelse.Rd
@@ -10,7 +10,7 @@ ae67f2166beea5db762a180516cffc67 *man/IFelse.Rd
 1cd3af54ee091bc0102fcb3271157fae *man/LKnFRKopt.Rd
 a963345ba1131fc670ab5dbb42c918b4 *man/ZinvC.Rd
 f28a8813a40de102ecbbf48edcac37cc *man/as.matrix.mrts.Rd
-469272f0be002a6359b83e2d2e0219a7 *man/autoFRK.Rd
+5fa97195638c5e3ac848aef4d2fedd68 *man/autoFRK.Rd
 f215212dbffc185a989654d4ca67f13c *man/basisSelect.Rd
 1154052494d1e3573bb187fb8c7e2805 *man/cMLE.Rd
 19e0384da0494453da6a918d043fff44 *man/cMLEimat.Rd
@@ -18,6 +18,8 @@ f215212dbffc185a989654d4ca67f13c *man/basisSelect.Rd
 049d3a0484688026f487e117f1f5177e *man/cMLEsp.Rd
 fa4721bba50957a2c800cb5ea21716f4 *man/checkDiag.Rd
 5eb68d1de209ef5ef07d95cb7c1205d3 *man/diag.spam.Rd
+b828d4c394cb408f219dbc69dcf980c2 *man/getASCeigens.Rd
+663a57e6403d41e807fc69e19b229aa3 *man/getEigen.Rd
 1ee3bda5e3a5710bcfba853545baf40e *man/getHalf.Rd
 bc9566d91a7784a8ef74676bac16331a *man/getlik.Rd
 a1931f57c088d92f94b8bb47880ca704 *man/indeMLE.Rd
@@ -41,6 +43,7 @@ a0e92ef180df6e24b3b2a8872e10645e *man/subknot.Rd
 f500471dca7a99c7051bbfb2046eda90 *man/uniquecombs.Rd
 e4a9a47c4a3aca98677ab8b16336e5de *src/Makevars
 7f86ebc9e7085ecaae67daacaae53ae6 *src/Makevars.win
-9e709ec7084b8f2ca4dcf1c2d266e358 *src/RcppExports.cpp
-8e73bb31a60bf7029d6c91e733bc1996 *src/autoFRK.cpp
+867bca1a4053f03cef81a675166adcf4 *src/RcppExports.cpp
+d3d6202720c76a0262b05adfc83e0e9d *src/autoFRK.cpp
+6a9956346c97adc83a85062e072e3600 *src/autoFRK_types.h
 7c22b1b500cab25872924e218f1645f5 *src/registerDynamicSymbol.c
