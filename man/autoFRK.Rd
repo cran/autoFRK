@@ -98,6 +98,7 @@ obs=sample(900,n)
 z=y[obs]+rnorm(n)*sqrt(s)
 X=grids[obs,]
 
+## Not run:
 #### method1: automatic selection and prediction
 one.imat=autoFRK(Data=z,loc=X,maxK=15)  
 yhat=predict(one.imat,newloc=grids)
@@ -142,6 +143,7 @@ image.plot(matrix(fhat[,1],30,30), main="Estimated Eigenfn 1")
 image.plot(matrix(fhat[,2],30,30), main="Estimated Eigenfn 2") 
 
 #### end of independent multi-realization simulation example
+## End(Not run)
 
 }
 \references{

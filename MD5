@@ -1,4 +1,4 @@
-d3c272e6c6e0517db85f3e4ff0187205 *DESCRIPTION
+76013bb2ae84a7c91839679785c25eb5 *DESCRIPTION
 b41368ba6c5c783b6a9d5e6c093af0c7 *NAMESPACE
 7a790ffa9a0a1b7702d289f9b8e7992a *R/RcppExports.R
 afd614f1c421745849da2ba1d6ed55b5 *R/autoFRK.R
@@ -10,7 +10,7 @@ ae67f2166beea5db762a180516cffc67 *man/IFelse.Rd
 1cd3af54ee091bc0102fcb3271157fae *man/LKnFRKopt.Rd
 a963345ba1131fc670ab5dbb42c918b4 *man/ZinvC.Rd
 f28a8813a40de102ecbbf48edcac37cc *man/as.matrix.mrts.Rd
-5fa97195638c5e3ac848aef4d2fedd68 *man/autoFRK.Rd
+ed9d76a7c3dc5b57c08861fe8433d14c *man/autoFRK.Rd
 f215212dbffc185a989654d4ca67f13c *man/basisSelect.Rd
 1154052494d1e3573bb187fb8c7e2805 *man/cMLE.Rd
 19e0384da0494453da6a918d043fff44 *man/cMLEimat.Rd
