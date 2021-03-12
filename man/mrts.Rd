@@ -15,7 +15,7 @@ Missing values are not allowed.}
 \item{x}{\emph{n} by \emph{d} matrix of coordinates corresponding to \emph{n} locations where the values of basis functions to be evaluated.
 Default is \code{NULL}, which uses the \emph{m} by \emph{d} matrix in \code{knot}.}
 
-\item{maxknot}{ maximum number of knots to be used in generating basis functions. If  \code{maxknot} < \emph{m}, a deterministic subset selection of knots will be used.  For using all knots, set \code{maxknot}>=\emph{m}. }
+\item{maxknot}{maximum number of knots to be used in generating basis functions. If  \code{maxknot} < \emph{m}, a deterministic subset selection of knots will be used.  For using all knots, set \code{maxknot}>=\emph{m}.}
 }
 \value{
 An \code{mrts} object is generated. If \code{x=NULL} (default) it returns
@@ -23,22 +23,29 @@ an \emph{m} by \emph{k} matrix of \emph{k} basis function taken values at knots.
 With \code{x} given, it returns \emph{n} by \emph{k} matrix for basis functions taken values at \code{x}.
 }
 \description{
-This function generates multi-resolution thin-plate spline basis functions. 
-The basis functions are (descendingly) ordered 
-in terms of their degrees of smoothness with a higher-order function corresponding 
+This function generates multi-resolution thin-plate spline basis functions.
+The basis functions are (descendingly) ordered
+in terms of their degrees of smoothness with a higher-order function corresponding
 to larger-scale features and a lower-order one corresponding to smaller-scale details.
 They are useful in the spatio-temporal random effects model.
 }
 \examples{
-knot=seq(0,1,l=30)
-b=mrts(knot,30)
-x0=seq(0,1,l=200)
-bx=predict(b,x0) 
-par(mfrow=c(5,6),mar=c(0,0,0,0))
-for(i in 1:30) { plot(bx[,i],type="l",axes=FALSE); box()}
+originalPar <- par(no.readonly = TRUE)
+knot <- seq(0, 1, l = 30)
+b <- mrts(knot, 30)
+x0 <- seq(0, 1, l = 200)
+bx <- predict(b, x0)
+par(mfrow = c(5, 6), mar = c(0, 0, 0, 0))
+for (i in 1:30) {
+  plot(bx[, i], type = "l", axes = FALSE)
+  box()
+}
+par(originalPar)
 }
 \references{
 Tzeng, S., & Huang, H. C. (2018). Resolution Adaptive Fixed Rank Kriging. Technometrics, https://doi.org/10.1080/00401706.2017.1345701.
+Tzeng, S., & Huang, H. C. (2015). Multi-Resolution Spatial Random-Effects Models
+for Irregularly Spaced Data. arXiv preprint arXiv:1504.05659.
 }
 \seealso{
 \code{\link{predict.mrts}}
