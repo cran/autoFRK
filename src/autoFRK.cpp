@@ -3,6 +3,7 @@
 #include <SymEigs.h>
 #include <iostream>
 #include <math.h>
+#include <algorithm>
 // [[Rcpp::depends(RcppEigen)]]
 
 using Eigen::Map;
@@ -14,19 +15,19 @@ using Eigen::SelfAdjointEigenSolver;
 
 using namespace Eigen;
 Eigen::VectorXd getASCeigenValues(const Eigen::Map<Eigen::MatrixXd> A) {
-    SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
-    return es.eigenvalues();
+  SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
+  return es.eigenvalues();
 }
 
 using namespace Eigen;
 // [[Rcpp::export]]
 Rcpp::List getASCeigens(const Eigen::Map<Eigen::MatrixXd> A) {
-    SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
-	Eigen::MatrixXd V;
-	Eigen::VectorXd lambda;
-	lambda = es.eigenvalues();
-	V = es.eigenvectors();
-      return Rcpp::List::create(Rcpp::Named("value") = lambda,
+  SelfAdjointEigenSolver<Eigen::MatrixXd> es(A);
+  Eigen::MatrixXd V;
+  Eigen::VectorXd lambda;
+  lambda = es.eigenvalues();
+  V = es.eigenvectors();
+  return Rcpp::List::create(Rcpp::Named("value") = lambda,
                             Rcpp::Named("vector") = V);
 }
 
@@ -36,15 +37,18 @@ using namespace Eigen;
 using namespace Rcpp;
 
 void mrtseigencpp(const Eigen::MatrixXd & M, const int ncv, const int k, Eigen::VectorXd &rho, Eigen::MatrixXd &gamma){
-
+  
   DenseSymMatProd<double> op(M);
-
+  
   // Construct eigen solver object, requesting the largest three eigenvalues
   SymEigsSolver< double, LARGEST_ALGE, DenseSymMatProd<double> > eigs(&op, k, ncv);
-
+  
   eigs.init();
   eigs.compute(1000, 1e-10);
-
+  if(static_cast<int>(eigs.info()) != 0){
+    Rcpp::stop("Spectra eigen decomposition did not converge");
+  }
+  
   rho = eigs.eigenvalues();
   gamma.noalias() = eigs.eigenvectors();
 }
@@ -53,21 +57,31 @@ void mrtseigencpp(const Eigen::MatrixXd & M, const int ncv, const int k, Eigen::
 using namespace Rcpp;
 using namespace std;
 using namespace Eigen;
-void tpm2(const MatrixXd P, MatrixXd& L, int p, int d){
-
+void tpm2(const MatrixXd& P, MatrixXd& L, int d){
+  
   double r;
-
+  const Eigen::Index p = P.rows();
+  if(d < 1 || d > 3){
+    Rcpp::stop("Unsupported dimension d: %d", d);
+  }
+  if(P.cols() < d){
+    Rcpp::stop("P must have at least %d columns", d);
+  }
+  if(L.rows() != p || L.cols() != p){
+    Rcpp::stop("L must be %d x %d", static_cast<int>(p), static_cast<int>(p));
+  }
+  
   if(d == 1){
-    for(unsigned int i = 0; i < p; i++){
-      for(unsigned int j = i + 1; j < p; ++j){
+    for(Eigen::Index i = 0; i < p; i++){
+      for(Eigen::Index j = i + 1; j < p; ++j){
         r  = abs(P(i, 0) - P(j, 0));
         L(i,j) = pow(r, 3)/12;
       }
     }
   }
   else if(d == 2){
-    for(unsigned int i = 0; i < p; i++){
-      for(unsigned int j = i + 1; j < p; ++j){
+    for(Eigen::Index i = 0; i < p; i++){
+      for(Eigen::Index j = i + 1; j < p; ++j){
         r  = sqrt(pow(P(i, 0) - P(j, 0),2) +
           (pow(P(i, 1) - P(j, 1), 2)));
         if(r != 0)
@@ -76,8 +90,8 @@ void tpm2(const MatrixXd P, MatrixXd& L, int p, int d){
     }
   }
   else if(d ==3){
-    for(unsigned int i = 0; i < p; i++){
-      for(unsigned int j = i + 1; j < p; ++j){
+    for(Eigen::Index i = 0; i < p; i++){
+      for(Eigen::Index j = i + 1; j < p; ++j){
         r = sqrt(pow(P(i, 0) - P(j, 0), 2) +
           pow(P(i, 1) - P(j, 1), 2) +
           pow(P(i, 2) - P(j, 2), 2));
@@ -85,30 +99,39 @@ void tpm2(const MatrixXd P, MatrixXd& L, int p, int d){
       }
     }
   }
-
+  
 }
 
 
 using namespace Rcpp;
 using namespace std;
 using namespace Eigen;
-void tpm_predict(const MatrixXd P_new, const MatrixXd P, MatrixXd& L, int d){
-
+void tpm_predict(const MatrixXd& P_new, const MatrixXd& P, MatrixXd& L, int d){
+  
   double r;
-  int p1 = P_new.rows();
-  int p2 = P.rows();
-
+  const Eigen::Index p1 = P_new.rows();
+  const Eigen::Index p2 = P.rows();
+  if(d < 1 || d > 3){
+    Rcpp::stop("Unsupported dimension d: %d", d);
+  }
+  if(P.cols() < d || P_new.cols() < d){
+    Rcpp::stop("Inputs must have at least %d columns", d);
+  }
+  if(L.rows() != p1 || L.cols() != p2){
+    Rcpp::stop("L must be %d x %d", static_cast<int>(p1), static_cast<int>(p2));
+  }
+  
   if(d == 1){
-    for(unsigned int i = 0; i < p1; i++){
-      for(unsigned int j = 0; j < p2; ++j){
+    for(Eigen::Index i = 0; i < p1; i++){
+      for(Eigen::Index j = 0; j < p2; ++j){
         r  = abs(P_new(i, 0) - P(j, 0));
         L(i,j) = pow(r, 3)/12;
       }
     }
   }
   else if(d == 2){
-    for(unsigned int i = 0; i < p1; i++){
-      for(unsigned int j = 0; j < p2; ++j){
+    for(Eigen::Index i = 0; i < p1; i++){
+      for(Eigen::Index j = 0; j < p2; ++j){
         r  = sqrt(pow(P_new(i, 0) - P(j, 0),2) +
           (pow(P_new(i, 1) - P(j, 1), 2)));
         if(r != 0)
@@ -117,8 +140,8 @@ void tpm_predict(const MatrixXd P_new, const MatrixXd P, MatrixXd& L, int d){
     }
   }
   else if(d ==3){
-    for(unsigned int i = 0; i < p1; i++){
-      for(unsigned int j = 0; j < p2; ++j){
+    for(Eigen::Index i = 0; i < p1; i++){
+      for(Eigen::Index j = 0; j < p2; ++j){
         r = sqrt(pow(P_new(i, 0) - P(j, 0), 2) +
           pow(P_new(i, 1) - P(j, 1), 2) +
           pow(P_new(i, 2) - P(j, 2), 2));
@@ -126,7 +149,7 @@ void tpm_predict(const MatrixXd P_new, const MatrixXd P, MatrixXd& L, int d){
       }
     }
   }
-
+  
 }
 
 
@@ -147,36 +170,45 @@ void mrts(const Eigen::MatrixXd &Xu,
   double root = sqrt(n);
   Eigen::MatrixXd B, gammas, X2_temp, gamma;
   Eigen::VectorXd rho;
-
+  if(k <= 0){
+    Rcpp::stop("k must be positive");
+  }
+  if(n <= 1){
+    Rcpp::stop("n must be greater than 1");
+  }
+  if(k >= n){
+    Rcpp::stop("k must be less than n (got k=%d, n=%d)", k, n);
+  }
+  
   H = MatrixXd::Zero(n, n);
   B = MatrixXd::Ones(n, d + 1);
   X =  MatrixXd::Ones(n, k + d + 1);
-
-  tpm2(Xu, H, n, d);
-
+  
+  tpm2(Xu, H, d);
+  
   H += H.transpose().eval();
   B.rightCols(d) = Xu;
   const Eigen::MatrixXd Bt = B.transpose();
   Eigen::MatrixXd BtB(MatrixXd(d+1, d+1).setZero().
                         selfadjointView<Lower>().rankUpdate(Bt));
-
+  
   const Eigen::LLT<MatrixXd> llt(BtB);
   BBB = llt.solve(Bt);
   const Eigen::MatrixXd AH = H - (H * B) * BBB;
   const Eigen::MatrixXd AHA = AH - BBB.transpose() * (Bt * AH);
-
-  int ncv = min(n, max(2 * k + 1, 20));
-
+  
+  int ncv = std::min(n, std::max(2 * k + 1, 20));
+  
   mrtseigencpp(AHA, ncv, k, rho, gamma);
-
-
+  
+  
   gammas = (gamma - B * (BBB * gamma)).array().rowwise() / rho.transpose().array() * root;
   Eigen::MatrixXd X_temp = Xu.rowwise() - Xu.colwise().mean();
   nconst = X_temp.colwise().norm();
-
+  
   X.block(0, 1, n, d) = X_temp.array().rowwise() * (root / nconst.transpose().array());
   X.block(0, d + 1, n, k) = gamma * root;
-
+  
   UZ = MatrixXd::Zero(n + d + 1, k + d + 1);
   UZ.block(0, 0, n, k) = gammas;
   UZ(n , k) = 1;
@@ -192,14 +224,17 @@ using namespace Rcpp;
 Rcpp::List mrtsrcpp(const Eigen::Map<Eigen::MatrixXd> Xu,
                     const Eigen::Map<Eigen::MatrixXd> xobs_diag,
                     const int k){
-
+  
   int n(Xu.rows()), d(Xu.cols());
   Eigen::MatrixXd  H, X, UZ, BBB;
   Eigen::VectorXd nconst;
-
+  if(xobs_diag.rows() != d || xobs_diag.cols() != d){
+    Rcpp::stop("xobs_diag must be %d x %d", d, d);
+  }
+  
   mrts(Xu, xobs_diag, k, n, d, H, X, UZ, BBB, nconst);
-
-
+  
+  
   return Rcpp::List::create(Rcpp::Named("X") = X,
                             Rcpp::Named("UZ") = UZ,
                             Rcpp::Named("BBBH") = BBB * H,
@@ -211,32 +246,38 @@ using namespace Eigen;
 using namespace Rcpp;
 // [[Rcpp::export]]
 Rcpp::List mrtsrcpp_predict0(const Eigen::Map<Eigen::MatrixXd> Xu,
-                            const Eigen::Map<Eigen::MatrixXd> xobs_diag,
-                            const Eigen::Map<Eigen::MatrixXd> xnew,
-                            const int k){
-
-
+                             const Eigen::Map<Eigen::MatrixXd> xobs_diag,
+                             const Eigen::Map<Eigen::MatrixXd> xnew,
+                             const int k){
+  
+  
   int n(Xu.rows()), d(Xu.cols()), n2(xnew.rows());
   Eigen::MatrixXd  H, X, UZ, BBB, Hnew;
   Eigen::VectorXd nconst;
-
+  if(xobs_diag.rows() != d || xobs_diag.cols() != d){
+    Rcpp::stop("xobs_diag must be %d x %d", d, d);
+  }
+  if(xnew.cols() != d){
+    Rcpp::stop("xnew must have %d columns", d);
+  }
+  
   mrts(Xu, xobs_diag, k, n, d, H, X, UZ, BBB, nconst);
-
+  
   Hnew = MatrixXd::Zero(n2, n);
-
+  
   tpm_predict(xnew, Xu, Hnew, d);
-
-
+  
+  
   Eigen::MatrixXd X1 = Hnew * UZ.block(0, 0, n, k);
   Eigen::MatrixXd B = MatrixXd::Ones(n2, d + 1);
   B.rightCols(d) = xnew;
-
+  
   return Rcpp::List::create(Rcpp::Named("X") = X,
                             Rcpp::Named("UZ") = UZ,
                             Rcpp::Named("BBBH") = BBB * H,
                             Rcpp::Named("nconst") = nconst,
                             Rcpp::Named("X1") = X1 - B*((BBB* H) *UZ.block(0, 0, n, k)));
-                            
+  
 }
 
 
@@ -246,28 +287,40 @@ using namespace Rcpp;
 Rcpp::List mrtsrcpp_predict(const Eigen::Map<Eigen::MatrixXd> Xu,
                             const Eigen::Map<Eigen::MatrixXd> xobs_diag,
                             const Eigen::Map<Eigen::MatrixXd> xnew,
-							const Eigen::Map<Eigen::MatrixXd> BBBH,
-							const Eigen::Map<Eigen::MatrixXd> UZ,
-							const Eigen::Map<Eigen::VectorXd> nconst,
+                            const Eigen::Map<Eigen::MatrixXd> BBBH,
+                            const Eigen::Map<Eigen::MatrixXd> UZ,
+                            const Eigen::Map<Eigen::VectorXd> nconst,
                             const int k){
-
-
+  
+  
   int n(Xu.rows()), d(Xu.cols()), n2(xnew.rows());
   Eigen::MatrixXd  Hnew;
+  if(xnew.cols() != d){
+    Rcpp::stop("xnew must have %d columns", d);
+  }
+  if(BBBH.rows() != d + 1 || BBBH.cols() != n){
+    Rcpp::stop("BBBH must be %d x %d", d + 1, n);
+  }
+  if(UZ.rows() < n || UZ.cols() < k){
+    Rcpp::stop("UZ dimensions are inconsistent with n and k");
+  }
+  if(nconst.size() != d){
+    Rcpp::stop("nconst must have length %d", d);
+  }
   
   Hnew = MatrixXd::Zero(n2, n);
-
+  
   tpm_predict(xnew, Xu, Hnew, d);
-
-
+  
+  
   Eigen::MatrixXd X1 = Hnew * UZ.block(0, 0, n, k);
   Eigen::MatrixXd B = MatrixXd::Ones(n2, d + 1);
   B.rightCols(d) = xnew;
-
+  
   return Rcpp::List::create(Rcpp::Named("X") = Xu,
                             Rcpp::Named("UZ") = UZ,
                             Rcpp::Named("BBBH") = BBBH,
                             Rcpp::Named("nconst") = nconst,
                             Rcpp::Named("X1") = X1 - B*((BBBH) *UZ.block(0, 0, n, k)));
-                            
+  
 }
